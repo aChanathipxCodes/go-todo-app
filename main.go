@@ -1,8 +1,7 @@
 package main
 
 import (
-	"net/http"
-
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
@@ -19,23 +18,21 @@ var tasks = []Task{
 
 func main() {
 	r := gin.Default()
+	r.Use(cors.Default()) // ใช้การตั้งค่า CORS แบบ default
 
-	// ดึงงานทั้งหมด
 	r.GET("/tasks", func(c *gin.Context) {
-		c.JSON(http.StatusOK, tasks)
+		c.JSON(200, tasks)
 	})
 
-	// เพิ่มงานใหม่
 	r.POST("/tasks", func(c *gin.Context) {
 		var newTask Task
 		if err := c.BindJSON(&newTask); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			c.JSON(400, gin.H{"error": err.Error()})
 			return
 		}
-		newTask.ID = len(tasks) + 1
 		tasks = append(tasks, newTask)
-		c.JSON(http.StatusOK, newTask)
+		c.JSON(200, newTask)
 	})
 
-	r.Run(":8080") // รันเซิร์ฟเวอร์ที่พอร์ต 8080
+	r.Run(":8080") // Run on port 8080
 }
