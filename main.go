@@ -1,7 +1,6 @@
 package main
 
 import (
-	"net/http"
 	"strconv"
 
 	"github.com/gin-contrib/cors"
@@ -11,12 +10,11 @@ import (
 type Task struct {
 	ID   int    `json:"id"`
 	Text string `json:"text"`
-	Done bool   `json:"done"`
 }
 
 var tasks = []Task{
-	{ID: 1, Text: "เรียน Go", Done: false},
-	{ID: 2, Text: "สร้างเว็บด้วย React", Done: false},
+	{ID: 1, Text: "เรียน Go"},
+	{ID: 2, Text: "สร้างเว็บด้วย React"},
 }
 
 func main() {
@@ -33,27 +31,38 @@ func main() {
 			c.JSON(400, gin.H{"error": err.Error()})
 			return
 		}
+		newTask.ID = len(tasks) + 1
 		tasks = append(tasks, newTask)
 		c.JSON(200, newTask)
 	})
 
-	r.DELETE("/tasks/:id", func(c *gin.Context) {
-		idStr := c.Param("id")
-		id, err := strconv.Atoi(idStr)
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID"})
+	r.PATCH("/tasks/:id", func(c *gin.Context) {
+		id, _ := strconv.Atoi(c.Param("id"))
+		var updatedTask Task
+		if err := c.BindJSON(&updatedTask); err != nil {
+			c.JSON(400, gin.H{"error": err.Error()})
 			return
 		}
-
 		for i, task := range tasks {
 			if task.ID == id {
-				tasks = append(tasks[:i], tasks[i+1:]...)
-				c.JSON(http.StatusOK, gin.H{"message": "Task deleted successfully"})
+				tasks[i].Text = updatedTask.Text
+				c.JSON(200, tasks[i])
 				return
 			}
 		}
+		c.JSON(404, gin.H{"error": "Task not found"})
+	})
 
-		c.JSON(http.StatusNotFound, gin.H{"message": "Task not found"})
+	r.DELETE("/tasks/:id", func(c *gin.Context) {
+		id, _ := strconv.Atoi(c.Param("id"))
+		for i, task := range tasks {
+			if task.ID == id {
+				tasks = append(tasks[:i], tasks[i+1:]...)
+				c.JSON(200, gin.H{"message": "Task deleted"})
+				return
+			}
+		}
+		c.JSON(404, gin.H{"error": "Task not found"})
 	})
 
 	r.Run(":8080")
