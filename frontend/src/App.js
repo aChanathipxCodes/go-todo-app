@@ -5,6 +5,7 @@ const App = () => {
   const [tasks, setTasks] = useState([]);
   const [taskText, setTaskText] = useState("");
 
+  // ดึงข้อมูลจาก API
   const loadTasks = async () => {
     try {
       const response = await fetch("http://localhost:8080/tasks");
@@ -15,6 +16,7 @@ const App = () => {
     }
   };
 
+  // ฟังก์ชันเพิ่มงานใหม่
   const addTask = async () => {
     if (!taskText.trim()) return;
     const newTask = { text: taskText, done: false };
@@ -35,6 +37,7 @@ const App = () => {
     }
   };
 
+  // ฟังก์ชันเปลี่ยนสถานะของงาน
   const toggleTaskDone = async (taskId, currentStatus) => {
     const updatedTask = { done: !currentStatus };
     try {
@@ -50,6 +53,21 @@ const App = () => {
       }
     } catch (error) {
       console.error("Error updating task:", error);
+    }
+  };
+
+  // ฟังก์ชันลบงาน
+  const deleteTask = async (taskId) => {
+    try {
+      const response = await fetch(`http://localhost:8080/tasks/${taskId}`, {
+        method: "DELETE",
+      });
+      if (response.ok) {
+        // ลบ task ที่มี id ตรงกับ taskId ออกจาก array tasks
+        setTasks(tasks.filter((task) => task.id !== taskId));
+      }
+    } catch (error) {
+      console.error("Error deleting task:", error);
     }
   };
 
@@ -72,12 +90,13 @@ const App = () => {
       <ul>
         {tasks.map((task) => (
           <li key={task.id} className={`task-item ${task.done ? "done" : ""}`}>
-            <input
-              type="checkbox"
-              checked={task.done}
-              onChange={() => toggleTaskDone(task.id, task.done)}
-            />
-            {task.text}
+            <span className="task-text">{task.text}</span>
+            <button
+              className="delete-btn"
+              onClick={() => deleteTask(task.id)} // ส่ง id ของ task ที่จะลบ
+            >
+              ลบ
+            </button>
           </li>
         ))}
       </ul>

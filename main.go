@@ -1,6 +1,9 @@
 package main
 
 import (
+	"net/http"
+	"strconv"
+
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
@@ -18,7 +21,7 @@ var tasks = []Task{
 
 func main() {
 	r := gin.Default()
-	r.Use(cors.Default()) // ใช้การตั้งค่า CORS แบบ default
+	r.Use(cors.Default())
 
 	r.GET("/tasks", func(c *gin.Context) {
 		c.JSON(200, tasks)
@@ -34,5 +37,24 @@ func main() {
 		c.JSON(200, newTask)
 	})
 
-	r.Run(":8080") // Run on port 8080
+	r.DELETE("/tasks/:id", func(c *gin.Context) {
+		idStr := c.Param("id")
+		id, err := strconv.Atoi(idStr)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID"})
+			return
+		}
+
+		for i, task := range tasks {
+			if task.ID == id {
+				tasks = append(tasks[:i], tasks[i+1:]...)
+				c.JSON(http.StatusOK, gin.H{"message": "Task deleted successfully"})
+				return
+			}
+		}
+
+		c.JSON(http.StatusNotFound, gin.H{"message": "Task not found"})
+	})
+
+	r.Run(":8080")
 }
